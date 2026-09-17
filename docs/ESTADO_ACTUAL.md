@@ -54,6 +54,8 @@ Nunca ejecutar `connectedDebugAndroidTest` en el teléfono físico con datos. In
 
 ## Versionado y siguiente bloque
 
+- Incorporada una guía de puesta en marcha en `README.md`: requisitos, clonación privada, SDK/JBR, configuración local, compilación, pruebas seguras, ejecución en emulador, conexión ESP32, tratamiento de secretos y solución de problemas. La guía usa el emulador como destino predeterminado y conserva la prohibición de instrumentadas o acciones destructivas en teléfonos con datos.
+- La revisión del README constató una inconsistencia previa: el `main` actual no expone `Simular lanzamiento`, aunque las reglas del proyecto indican conservarlo temporalmente. La guía no promete esa función y deja explícito que, sin ESP32, solo pueden validarse apertura, navegación y cámara; restaurar el simulador queda fuera de este bloque documental.
 - Versión actual: `0.9.0-dev` / versionCode 8; las pantallas usan `BuildConfig.VERSION_NAME` como fuente visible única. Regla: al validar será `0.9.0`; correcciones usan patch (`0.9.1`) y funciones nuevas minor posteriores (`1.0.0`); la primera versión orientada a usuarios será `1.0.0`.
 - Navegación centrada en jugadores: especificación y plan aprobados. La Etapa 1 implementa acceso temporal a Coaching: configuración inicial sólo sin perfil/PIN, PIN en entradas posteriores y bloqueo tras 5 minutos en segundo plano mediante reloj monotónico. El permiso no se persiste ni modifica sesiones, radar o cámara. Validación física completada el 2026-09-16.
 - Próximo objetivo: validación física de la Tarea 3; después, si se confirma, continuar con la Tarea 4. Room, radar, cámara, videos, respaldos y PIN permanecen sin cambios.
