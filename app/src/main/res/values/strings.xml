@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">RadarCamera</string>
+    <string name="coaching_access_title">Acceso Coaching</string>
+    <string name="coaching_access_loading">Comprobando configuraci&#243;n local&#8230;</string>
+    <string name="coaching_access_load_error">No se pudo comprobar la configuraci&#243;n local.</string>
+    <string name="coaching_recovery_title">Recuperar acceso Coaching</string>
+    <string name="coaching_recovery_verify_pin">Verifica el PIN existente antes de crear el perfil del entrenador.</string>
+    <string name="coaching_recovery_create_profile">Crear perfil del entrenador</string>
+    <string name="coaching_recovery_create_pin">Crea un PIN nuevo para el perfil existente.</string>
+    <string name="coaching_recovery_warning">No se borrar&#225; ni modificar&#225; informaci&#243;n existente autom&#225;ticamente.</string>
+    <string name="coaching_setup_title">Configurar Coaching</string>
+    <string name="coaching_setup_description">Crea el perfil local y el PIN que proteger&#225; Coaching en este dispositivo.</string>
+    <string name="coaching_setup_name">Nombre del entrenador</string>
+    <string name="coaching_setup_create_pin">Crear PIN</string>
+    <string name="coaching_setup_confirm_pin">Confirmar PIN</string>
+    <string name="coaching_setup_create_enter">Crear y entrar</string>
+    <string name="coaching_setup_saving">Guardando&#8230;</string>
+    <string name="coaching_setup_name_error">Escribe el nombre del entrenador.</string>
+    <string name="coaching_setup_pin_error">El PIN debe tener entre 4 y 6 n&#250;meros.</string>
+    <string name="coaching_setup_pin_mismatch">Los PIN no coinciden.</string>
+    <string name="coaching_setup_exists_error">La configuraci&#243;n inicial ya existe.</string>
+    <string name="coaching_setup_save_error">No se pudo guardar la configuraci&#243;n inicial.</string>
+    <string name="coaching_common_back">Volver</string>
+    <string name="coaching_common_verify">Verificar PIN</string>
+    <string name="coaching_common_continue">Continuar</string>
+    <string name="coaching_recovery_pin_incorrect">PIN incorrecto.</string>
+    <string name="coaching_recovery_operation_error">No se pudo completar la recuperaci&#243;n. Int&#233;ntalo nuevamente.</string>
+</resources>
