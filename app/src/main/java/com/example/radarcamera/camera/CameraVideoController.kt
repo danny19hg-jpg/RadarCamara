@@ -2,6 +2,8 @@ package com.example.radarcamera.camera
 
 import android.content.Context
 import android.os.SystemClock
+import android.util.Log
+import android.util.Range
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -46,6 +48,23 @@ internal data class PreRollClip(
 
 internal class CameraVideoController {
 
+    private companion object {
+        private const val TAG = "RadarCamFps"
+
+        /**
+         * Cuadros por segundo solicitados a CameraX.
+         *
+         * A 30 fps una pelota a 90 mph avanza ~1,3 m entre cuadros y el vuelo completo
+         * deja solo ~14 muestras, insuficientes para reconstruir la trayectoria mas
+         * adelante. A 60 fps se duplican a ~28.
+         *
+         * Es una peticion, no una garantia: si el dispositivo no lo soporta, CameraX
+         * mantiene el valor por defecto sin fallar. El rango realmente soportado se
+         * registra en el log con la etiqueta TAG despues de enlazar la camara.
+         */
+        private const val FPS_OBJETIVO = 60
+    }
+
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
     private var detencionSolicitada = false
@@ -87,14 +106,24 @@ internal class CameraVideoController {
                         )
                     )
                     .build()
-                val capture = VideoCapture.withOutput(recorder)
+                val capture = VideoCapture.Builder(recorder)
+                    .setTargetFrameRate(Range(FPS_OBJETIVO, FPS_OBJETIVO))
+                    .build()
 
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
+                val camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     preview,
                     capture
+                )
+
+                // Diagnostico: deja constancia de lo solicitado y de lo que el
+                // dispositivo declara soportar. No altera la grabacion.
+                Log.i(
+                    TAG,
+                    "FPS solicitados=$FPS_OBJETIVO | rangos soportados=" +
+                        camera.cameraInfo.supportedFrameRateRanges
                 )
 
                 videoCapture = capture
