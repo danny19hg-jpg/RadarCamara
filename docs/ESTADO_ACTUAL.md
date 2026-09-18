@@ -9,6 +9,7 @@ RadarCamera registra velocidades de pitcheo desde un ESP32, conserva sesiones lo
 - ESP32: punto de acceso y endpoint `http://192.168.4.1/status`; conserva `eventoLive` y `velocidadLive`.
 - Radar: `RadarStatusClient` y `CoachingEventCursor`; la primera respuesta es baseline y los fallos HTTP no borran el último evento.
 - Cámara: CameraX + Media3, pre-roll de 4 s y post-roll de 1 s, MP4 aproximado de 5 s con overlay MPH.
+- Diagnóstico 60 FPS 2026-09-18: `setTargetFrameRate(60)` se degradaba silenciosamente a 30 FPS. La integración ahora consulta una `SessionConfig` que exige FHD + `GroupableFeature.FPS_60` y usa un fallback explícito FHD/HD a 30 FPS cuando la combinación no es compatible. En el teléfono Android 16 probado, CameraX 1.6.2 informó `sesion60Compatible=false`; el MP4 físico resultó 1920×1080 a 30.00 FPS. El HAL anuncia un modo propietario HFR 1080p60, pero no lo expone como combinación CameraX compatible.
 - Datos: Room esquema 7 (`coaches`, `players`, `sessions`, `pitches`), migraciones 1→2→3→4→5→6→7, sin migración destructiva. La 6→7 agrega `category` y `teamAcademy` a jugadores con valores seguros, sin tocar sesiones, lanzamientos ni referencias de video.
 - Historial: sesiones finalizadas globales y por jugador, incluso archivado; descarte recuperable mediante `discardedAt`, sin borrar pitches ni videos.
 - Sesiones eliminadas: el detalle conserva explícitamente su origen; restaurar vuelve a la lista de eliminadas. La eliminación definitiva elimina exclusivamente URIs asociadas a sus pitches mediante MediaStore y después borra pitches y sesión en Room.
@@ -60,6 +61,7 @@ Nunca ejecutar `connectedDebugAndroidTest` en el teléfono físico con datos. In
 - Navegación centrada en jugadores: especificación y plan aprobados. La Etapa 1 implementa acceso temporal a Coaching: configuración inicial sólo sin perfil/PIN, PIN en entradas posteriores y bloqueo tras 5 minutos en segundo plano mediante reloj monotónico. El permiso no se persiste ni modifica sesiones, radar o cámara. Validación física completada el 2026-09-16.
 - Próximo objetivo: validación física de la Tarea 3; después, si se confirma, continuar con la Tarea 4. Room, radar, cámara, videos, respaldos y PIN permanecen sin cambios.
 - Pendientes futuros: reportes, edición posterior de tipo, métricas avanzadas, sincronización y rediseño visual v0.8.5.
+- Cámara: queda pendiente decidir si se investiga una ruta específica del fabricante/Camera2 para 1080p60. La ruta portable CameraX mantiene FHD a 30 FPS en el dispositivo probado y conserva el flujo 4+1 y el overlay.
 
 ## Commits de referencia
 

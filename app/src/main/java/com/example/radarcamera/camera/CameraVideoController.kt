@@ -6,9 +6,11 @@ import android.util.Log
 import android.util.Range
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
+import androidx.camera.core.SessionConfig
+import androidx.camera.core.featuregroup.GroupableFeature
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.FileOutputOptions
-import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.GroupableFeatures
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -50,20 +52,14 @@ internal class CameraVideoController {
 
     private companion object {
         private const val TAG = "RadarCamFps"
-
-        /**
-         * Cuadros por segundo solicitados a CameraX.
-         *
-         * A 30 fps una pelota a 90 mph avanza ~1,3 m entre cuadros y el vuelo completo
-         * deja solo ~14 muestras, insuficientes para reconstruir la trayectoria mas
-         * adelante. A 60 fps se duplican a ~28.
-         *
-         * Es una peticion, no una garantia: si el dispositivo no lo soporta, CameraX
-         * mantiene el valor por defecto sin fallar. El rango realmente soportado se
-         * registra en el log con la etiqueta TAG despues de enlazar la camara.
-         */
-        private const val FPS_OBJETIVO = 60
+        private const val FPS_60 = 60
+        private const val FPS_30 = 30
     }
+
+    private data class CameraBinding(
+        val capture: VideoCapture<Recorder>,
+        val sessionConfig: SessionConfig
+    )
 
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
@@ -91,42 +87,33 @@ internal class CameraVideoController {
         cameraProviderFuture.addListener({
             try {
                 val cameraProvider = cameraProviderFuture.get()
-
-                val preview = Preview.Builder()
-                    .build()
-                    .also {
-                        it.surfaceProvider = previewView.surfaceProvider
-                    }
-
-                val recorder = Recorder.Builder()
-                    .setQualitySelector(
-                        QualitySelector.from(
-                            Quality.FHD,
-                            FallbackStrategy.lowerQualityOrHigherThan(Quality.HD)
-                        )
-                    )
-                    .build()
-                val capture = VideoCapture.Builder(recorder)
-                    .setTargetFrameRate(Range(FPS_OBJETIVO, FPS_OBJETIVO))
-                    .build()
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                val cameraInfo = cameraProvider.getCameraInfo(cameraSelector)
+                val fps60Binding = createFps60Binding(previewView)
+                val fps60Supported = cameraInfo.isSessionConfigSupported(
+                    fps60Binding.sessionConfig
+                )
+                val frameRateMode = selectCameraFrameRateMode(fps60Supported)
+                val binding = when (frameRateMode) {
+                    CameraFrameRateMode.FPS_60_REQUIRED -> fps60Binding
+                    CameraFrameRateMode.FPS_30_FALLBACK -> createFps30Binding(previewView)
+                }
 
                 cameraProvider.unbindAll()
                 val camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview,
-                    capture
+                    cameraSelector,
+                    binding.sessionConfig
                 )
 
-                // Diagnostico: deja constancia de lo solicitado y de lo que el
-                // dispositivo declara soportar. No altera la grabacion.
                 Log.i(
                     TAG,
-                    "FPS solicitados=$FPS_OBJETIVO | rangos soportados=" +
+                    "modo=$frameRateMode | sesion60Compatible=$fps60Supported | " +
+                        "rangos regulares soportados=" +
                         camera.cameraInfo.supportedFrameRateRanges
                 )
 
-                videoCapture = capture
+                videoCapture = binding.capture
                 onReady(true)
 
             } catch (e: Exception) {
@@ -136,6 +123,48 @@ internal class CameraVideoController {
             }
         }, ContextCompat.getMainExecutor(context))
     }
+
+    private fun createFps60Binding(previewView: PreviewView): CameraBinding {
+        val preview = createPreview(previewView)
+        val capture = VideoCapture.withOutput(Recorder.Builder().build())
+        val sessionConfig = SessionConfig.Builder(preview, capture)
+            .setRequiredFeatureGroup(
+                GroupableFeature.FPS_60,
+                GroupableFeatures.FHD_RECORDING
+            )
+            .build()
+
+        return CameraBinding(capture, sessionConfig)
+    }
+
+    private fun createFps30Binding(previewView: PreviewView): CameraBinding {
+        val preview = createPreview(previewView)
+        val recorder = Recorder.Builder()
+            .setQualitySelector(
+                QualitySelector.fromOrderedList(
+                    fallbackVideoQualityOrder().map { quality ->
+                        when (quality) {
+                            CameraVideoQuality.FHD -> Quality.FHD
+                            CameraVideoQuality.HD -> Quality.HD
+                        }
+                    }
+                )
+            )
+            .build()
+        val capture = VideoCapture.Builder(recorder)
+            .setTargetFrameRate(Range(FPS_30, FPS_30))
+            .build()
+
+        return CameraBinding(
+            capture = capture,
+            sessionConfig = SessionConfig.Builder(preview, capture).build()
+        )
+    }
+
+    private fun createPreview(previewView: PreviewView): Preview =
+        Preview.Builder()
+            .build()
+            .also { it.surfaceProvider = previewView.surfaceProvider }
 
     fun iniciarPreRoll(
         context: Context,

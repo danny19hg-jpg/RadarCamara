@@ -68,6 +68,8 @@
 
 ## Limitaciones conocidas de captura
 
+- Validación 60 FPS 2026-09-18: la solicitud directa `VideoCapture.setTargetFrameRate(60)` produjo realmente 1920×1080 a 30.00 FPS. Con CameraX 1.6.2 se probó la API oficial de `SessionConfig` exigiendo conjuntamente FHD y `GroupableFeature.FPS_60`; el teléfono Android 16 respondió `sesion60Compatible=false` y se activó el fallback explícito FHD/HD a 30 FPS. El HAL declara internamente HFR 1920×1080@60 mediante capacidades del fabricante, pero sus rangos regulares publicados a CameraX llegan solo a `[30,30]`. Log: `RadarCamFps`.
+
 - Diagnóstico de cursor 2026-09-16: un error HTTP transitorio ya no reinicia `eventoLive`. La siguiente respuesta correcta conserva la comparación contra el último evento conocido; un contador menor confirma reinicio y establece una nueva referencia sin registrar esa lectura.
 - Validación física 2026-09-16 (commit `9814e76`): tras “Radar listo”, el primer lanzamiento posterior y los siguientes se registraron inmediatamente; activar o desactivar Video no alteró la admisión deportiva.
 - Un salto de contador registra solo el último evento disponible y deja advertencia debug: `/status` no permite recuperar las velocidades intermedias.
